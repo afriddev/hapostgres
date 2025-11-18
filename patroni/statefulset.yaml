@@ -109,7 +109,7 @@ spec:
       name: postgres-data
     spec:
       accessModes: ["ReadWriteOnce"]
-      storageClassName: local-path
+      storageClassName: postgres-local-path
       resources:
         requests:
           storage: 20Gi

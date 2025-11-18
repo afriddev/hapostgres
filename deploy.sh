@@ -6,7 +6,7 @@ echo "====== Deploying PostgreSQL HA Cluster ======"
 echo ""
 
 # Check if local-path-provisioner is installed
-if ! kubectl get storageclass local-path &> /dev/null; then
+if ! kubectl get deployment local-path-provisioner -n local-path-storage &> /dev/null; then
     echo "Installing local-path-provisioner..."
     kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.24/deploy/local-path-storage.yaml
     echo "Waiting for provisioner to be ready..."
@@ -26,7 +26,7 @@ kubectl apply -f secrets.yaml
 echo "✓ Secrets created"
 
 kubectl apply -f storage-class.yaml
-echo "✓ StorageClass created"
+echo "✓ Custom StorageClass created"
 
 kubectl apply -f etcd/
 echo "✓ etcd deployed"
