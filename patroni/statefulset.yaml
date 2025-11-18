@@ -1,0 +1,115 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-patroni
+  namespace: postgres-ha
+spec:
+  serviceName: postgres-patroni
+  replicas: 3
+  selector:
+    matchLabels:
+      app: postgres-patroni
+  template:
+    metadata:
+      labels:
+        app: postgres-patroni
+    spec:
+      containers:
+      - name: patroni
+        image: registry.opensource.zalan.do/acid/spilo-15:3.0-p1
+        ports:
+        - containerPort: 10003
+          name: postgres
+        - containerPort: 8008
+          name: patroni
+        env:
+        - name: SCOPE
+          value: postgres-cluster
+        - name: PGVERSION
+          value: "15"
+        - name: PGPORT
+          value: "10003"
+        - name: ETCD3_HOSTS
+          value: 'etcd-0.etcd.postgres-ha.svc.cluster.local:2379,etcd-1.etcd.postgres-ha.svc.cluster.local:2379,etcd-2.etcd.postgres-ha.svc.cluster.local:2379'
+        - name: KUBERNETES_LABELS
+          value: '{app: postgres-patroni}'
+        - name: KUBERNETES_SCOPE_LABEL
+          value: app
+        - name: KUBERNETES_ROLE_LABEL
+          value: role
+        - name: KUBERNETES_USE_CONFIGMAPS
+          value: "true"
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: PGUSER_SUPERUSER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secrets
+              key: POSTGRES_USER
+        - name: PGPASSWORD_SUPERUSER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secrets
+              key: POSTGRES_PASSWORD
+        - name: PGUSER_REPLICATOR
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secrets
+              key: REPLICATION_USER
+        - name: PGPASSWORD_REPLICATOR
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secrets
+              key: REPLICATION_PASSWORD
+        - name: PGDATABASE
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secrets
+              key: POSTGRES_DB
+        - name: PATRONI_POSTGRESQL_CONNECT_ADDRESS
+          value: '$(POD_IP):10003'
+        - name: PATRONI_POSTGRESQL_LISTEN
+          value: '0.0.0.0:10003'
+        - name: PATRONI_RESTAPI_LISTEN
+          value: '0.0.0.0:8008'
+        - name: PATRONI_BOOTSTRAP_DCS_POSTGRESQL_PARAMETERS_PORT
+          value: "10003"
+        envFrom:
+        - configMapRef:
+            name: postgres-config
+        volumeMounts:
+        - name: postgres-data
+          mountPath: /home/postgres/pgdata
+        - name: dshm
+          mountPath: /dev/shm
+        livenessProbe:
+          httpGet:
+            path: /liveness
+            port: 8008
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /readiness
+            port: 8008
+          initialDelaySeconds: 10
+          periodSeconds: 10
+      volumes:
+      - name: dshm
+        emptyDir:
+          medium: Memory
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: local-path
+      resources:
+        requests:
+          storage: 20Gi

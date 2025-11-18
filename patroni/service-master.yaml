@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-master
+  namespace: postgres-ha
+  labels:
+    app: postgres-patroni
+spec:
+  type: NodePort
+  ports:
+  - port: 10003
+    targetPort: 10003
+    nodePort: 30002
+    protocol: TCP
+    name: postgres
+  selector:
+    app: postgres-patroni
+    role: master
