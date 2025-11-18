@@ -3,7 +3,5 @@ kind: StorageClass
 metadata:
   name: postgres-local-path
 provisioner: rancher.io/local-path
-parameters:
-  nodePath: /home/alien/masterdb
 volumeBindingMode: WaitForFirstConsumer
 reclaimPolicy: Retain
