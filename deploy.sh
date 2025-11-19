@@ -4,6 +4,13 @@ set -e
 echo "====== Deploying Master DB Cluster ======"
 echo ""
 
+# Clear etcd data on fresh deploy
+if [ -d "/home/alien/masterdb/etcd-0/member" ]; then
+    echo "→ Clearing old etcd data..."
+    sudo rm -rf /home/alien/masterdb/etcd-*/*
+    echo "✓ etcd data cleared"
+fi
+
 # Apply in order
 echo "→ Creating namespace..."
 kubectl apply -f 00-namespace/
@@ -38,14 +45,13 @@ echo "====== Deployment Complete ======"
 echo ""
 kubectl get pods -n his-masterdb
 echo ""
-kubectl get pvc -n his-masterdb
-echo ""
-kubectl get pv | grep masterdb
-echo ""
 
 NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[0].address}')
 echo "✓ PostgreSQL Master: $NODE_IP:30002"
 echo "✓ PostgreSQL Replicas: $NODE_IP:30003"
-echo "✓ User: his | Password: his123 | DB: registration"
+echo "✓ User: postgres | Database: postgres"
 echo ""
 echo "Data location: /home/alien/masterdb/"
+echo ""
+echo "Check cluster:"
+echo "  kubectl exec -n his-masterdb postgres-patroni-0 -- patronictl list"
