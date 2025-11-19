@@ -17,6 +17,11 @@ spec:
       containers:
       - name: patroni
         image: registry.opensource.zalan.do/acid/spilo-15:3.0-p1
+        ports:
+        - containerPort: 10003
+          name: postgres
+        - containerPort: 8008
+          name: patroni
         env:
         - name: SCOPE
           value: postgres-cluster
@@ -61,16 +66,26 @@ spec:
             secretKeyRef:
               name: postgres-secrets
               key: POSTGRES_DB
+        - name: PATRONI_POSTGRESQL_CONNECT_ADDRESS
+          value: "$(POD_IP):10003"
+        - name: PATRONI_POSTGRESQL_LISTEN
+          value: "0.0.0.0:10003"
+        - name: PATRONI_RESTAPI_LISTEN
+          value: "0.0.0.0:8008"
         volumeMounts:
         - name: postgres-data
           mountPath: /home/postgres/pgdata/pgroot
-      volumeClaimTemplates:
-      - metadata:
-          name: postgres-data
-        spec:
-          accessModes:
-          - ReadWriteOnce
-          storageClassName: his-masterdb-local-path
-          resources:
-            requests:
-              storage: 20Gi
+      volumes:
+      - name: dshm
+        emptyDir:
+          medium: Memory
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      storageClassName: his-masterdb-local-path
+      resources:
+        requests:
+          storage: 20Gi
