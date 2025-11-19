@@ -21,7 +21,6 @@ data:
   teardown: |-
     #!/bin/sh
     set -eu
-    # Do NOT delete data for migration purposes
     echo "Skipping deletion to preserve data"
   helperPod.yaml: |-
     apiVersion: v1
