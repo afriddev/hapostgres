@@ -1,0 +1,31 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: patroni-clusterrole
+rules:
+- apiGroups: [""]
+  resources:
+  - pods
+  - endpoints
+  - services
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups: ["coordination.k8s.io"]
+  resources:
+  - leases
+  verbs:
+  - get
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups: [""]
+  resources: ["pods/status"]
+  verbs: ["update"]
