@@ -17,9 +17,13 @@ spec:
         app: postgres-patroni
     spec:
       serviceAccountName: postgres-patroni
+      securityContext:
+        fsGroup: 101  # ← postgres group
+        runAsUser: 101  # ← postgres user
+        runAsNonRoot: true
       containers:
       - name: patroni
-        image: ghcr.io/zalando/spilo-16:3.2-p3  # ← Changed image
+        image: ghcr.io/zalando/spilo-16:3.2-p3
         ports:
         - containerPort: 5432
           name: postgresql
