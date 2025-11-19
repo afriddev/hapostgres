@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: postgres-config
-  namespace: postgres-ha
+  namespace: his-masterdb
 data:
   PATRONI_POSTGRESQL_PG_HBA: |
     host all all 0.0.0.0/0 trust

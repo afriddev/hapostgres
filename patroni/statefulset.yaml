@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: postgres-patroni
-  namespace: postgres-ha
+  namespace: his-masterdb
 spec:
   serviceName: postgres-patroni
   replicas: 3
@@ -30,7 +30,7 @@ spec:
         - name: PGPORT
           value: "10003"
         - name: ETCD3_HOSTS
-          value: 'etcd-0.etcd:2379,etcd-1.etcd:2379,etcd-2.etcd:2379'
+          value: 'etcd-0.etcd.his-masterdb.svc.cluster.local:2379,etcd-1.etcd.his-masterdb.svc.cluster.local:2379,etcd-2.etcd.his-masterdb.svc.cluster.local:2379'
         - name: KUBERNETES_LABELS
           value: '{app: postgres-patroni}'
         - name: KUBERNETES_SCOPE_LABEL
@@ -109,7 +109,7 @@ spec:
       name: postgres-data
     spec:
       accessModes: ["ReadWriteOnce"]
-      storageClassName: postgres-local-path
+      storageClassName: his-masterdb-local-path
       resources:
         requests:
           storage: 20Gi

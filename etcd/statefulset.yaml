@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: etcd
-  namespace: postgres-ha
+  namespace: his-masterdb
 spec:
   serviceName: etcd
   replicas: 3
@@ -28,15 +28,15 @@ spec:
             fieldRef:
               fieldPath: metadata.name
         - name: ETCD_INITIAL_ADVERTISE_PEER_URLS
-          value: http://$(ETCD_NAME).etcd.postgres-ha.svc.cluster.local:2380
+          value: http://$(ETCD_NAME).etcd.his-masterdb.svc.cluster.local:2380
         - name: ETCD_LISTEN_PEER_URLS
           value: http://0.0.0.0:2380
         - name: ETCD_LISTEN_CLIENT_URLS
           value: http://0.0.0.0:2379
         - name: ETCD_ADVERTISE_CLIENT_URLS
-          value: http://$(ETCD_NAME).etcd.postgres-ha.svc.cluster.local:2379
+          value: http://$(ETCD_NAME).etcd.his-masterdb.svc.cluster.local:2379
         - name: ETCD_INITIAL_CLUSTER
-          value: etcd-0=http://etcd-0.etcd.postgres-ha.svc.cluster.local:2380,etcd-1=http://etcd-1.etcd.postgres-ha.svc.cluster.local:2380,etcd-2=http://etcd-2.etcd.postgres-ha.svc.cluster.local:2380
+          value: etcd-0=http://etcd-0.etcd.his-masterdb.svc.cluster.local:2380,etcd-1=http://etcd-1.etcd.his-masterdb.svc.cluster.local:2380,etcd-2=http://etcd-2.etcd.his-masterdb.svc.cluster.local:2380
         - name: ETCD_INITIAL_CLUSTER_STATE
           value: new
         - name: ETCD_INITIAL_CLUSTER_TOKEN
@@ -51,7 +51,7 @@ spec:
       name: etcd-data
     spec:
       accessModes: ["ReadWriteOnce"]
-      storageClassName: postgres-local-path
+      storageClassName: his-masterdb-local-path
       resources:
         requests:
           storage: 5Gi

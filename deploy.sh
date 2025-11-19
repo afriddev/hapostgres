@@ -7,7 +7,7 @@ echo ""
 # Ensure local-path-storage namespace
 kubectl get ns local-path-storage >/dev/null 2>&1 || kubectl create ns local-path-storage
 
-# Apply storage config for /home/alien/masterdb
+# Apply storage config for /home/alien/his-masterdb
 kubectl apply --validate=false -f local-path-config.yaml
 
 echo "Restarting local-path-provisioner..."
@@ -26,20 +26,20 @@ kubectl apply --validate=false -f etcd/
 echo "✓ ETCD applied"
 
 echo "Waiting for ETCD cluster to be ready..."
-kubectl wait --for=condition=ready pod -l app=etcd -n postgres-ha --timeout=300s
+kubectl wait --for=condition=ready pod -l app=etcd -n his-masterdb --timeout=300s
 echo "✓ ETCD ready"
 
 kubectl apply --validate=false -f patroni/
 echo "✓ Patroni applied"
 
 echo "Waiting for PostgreSQL cluster to be ready..."
-kubectl wait --for=condition=ready pod -l app=postgres-patroni -n postgres-ha --timeout=300s
+kubectl wait --for=condition=ready pod -l app=postgres-patroni -n his-masterdb --timeout=300s
 echo ""
 
 echo "====== Deployment Complete ======"
-kubectl get pods -n postgres-ha
-kubectl get svc -n postgres-ha
-kubectl get pvc -n postgres-ha
+kubectl get pods -n his-masterdb
+kubectl get svc -n his-masterdb
+kubectl get pvc -n his-masterdb
 
 NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[0].address}')
 echo ""
@@ -51,6 +51,6 @@ echo "Password: his123"
 echo "Database: registration"
 echo ""
 echo "Cluster status check:"
-echo "  kubectl exec -n postgres-ha postgres-patroni-0 -- patronictl list"
+echo "  kubectl exec -n his-masterdb postgres-patroni-0 -- patronictl list"
 echo ""
-echo "Data stored under /home/alien/masterdb/"
+echo "Data stored under /home/alien/his-masterdb/"
