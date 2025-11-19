@@ -7,7 +7,8 @@ metadata:
     app: etcd
 spec:
   serviceName: etcd
-  replicas: 3 # ← Start with 1 only
+  replicas: 3
+  podManagementPolicy: Parallel  # ← Starts all 3 pods at once
   selector:
     matchLabels:
       app: etcd
@@ -38,13 +39,17 @@ spec:
         - name: ETCD_LISTEN_CLIENT_URLS
           value: "http://0.0.0.0:2379"
         - name: ETCD_INITIAL_CLUSTER
-          value: "etcd-0=http://etcd-0.etcd.his-masterdb.svc.cluster.local:2380"  # ← Only etcd-0
+          value: "etcd-0=http://etcd-0.etcd.his-masterdb.svc.cluster.local:2380,etcd-1=http://etcd-1.etcd.his-masterdb.svc.cluster.local:2380,etcd-2=http://etcd-2.etcd.his-masterdb.svc.cluster.local:2380"
         - name: ETCD_INITIAL_CLUSTER_STATE
           value: "new"
         - name: ETCD_INITIAL_CLUSTER_TOKEN
           value: "etcd-cluster-masterdb"
         - name: ETCD_DATA_DIR
           value: "/etcd-data"
+        - name: ETCD_AUTO_COMPACTION_MODE
+          value: "revision"
+        - name: ETCD_AUTO_COMPACTION_RETENTION
+          value: "1000"
         volumeMounts:
         - name: etcd-storage
           mountPath: /etcd-data
