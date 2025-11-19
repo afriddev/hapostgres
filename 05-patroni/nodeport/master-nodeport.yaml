@@ -16,3 +16,4 @@ spec:
   selector:
     app: postgres-patroni
     role: master
+
