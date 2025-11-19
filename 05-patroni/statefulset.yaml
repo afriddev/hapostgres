@@ -1,0 +1,121 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-patroni
+  namespace: his-masterdb
+  labels:
+    app: postgres-patroni
+spec:
+  serviceName: postgres-patroni
+  replicas: 3
+  selector:
+    matchLabels:
+      app: postgres-patroni
+  template:
+    metadata:
+      labels:
+        app: postgres-patroni
+    spec:
+      serviceAccountName: postgres-patroni
+      containers:
+      - name: patroni
+        image: patroni/patroni:3.2.0
+        ports:
+        - containerPort: 5432
+          name: postgresql
+        - containerPort: 8008
+          name: patroni
+        env:
+        - name: PATRONI_KUBERNETES_NAMESPACE
+          value: his-masterdb
+        - name: PATRONI_KUBERNETES_LABELS
+          value: "{app: postgres-patroni}"
+        - name: PATRONI_KUBERNETES_USE_ENDPOINTS
+          value: "true"
+        - name: PATRONI_SUPERUSER_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secrets
+              key: PATRONI_SUPERUSER_USERNAME
+        - name: PATRONI_SUPERUSER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secrets
+              key: PATRONI_SUPERUSER_PASSWORD
+        - name: PATRONI_REPLICATION_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secrets
+              key: PATRONI_REPLICATION_USERNAME
+        - name: PATRONI_REPLICATION_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secrets
+              key: PATRONI_REPLICATION_PASSWORD
+        - name: PATRONI_SCOPE
+          value: postgres-cluster
+        - name: PATRONI_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: PATRONI_POSTGRESQL_DATA_DIR
+          value: /var/lib/postgresql/data/pgdata
+        - name: PATRONI_POSTGRESQL_PGPASS
+          value: /tmp/pgpass
+        - name: PATRONI_POSTGRESQL_LISTEN
+          value: "0.0.0.0:5432"
+        - name: PATRONI_RESTAPI_LISTEN
+          value: "0.0.0.0:8008"
+        - name: PATRONI_ETCD_HOSTS
+          value: "etcd-0.etcd.his-masterdb.svc.cluster.local:2379,etcd-1.etcd.his-masterdb.svc.cluster.local:2379,etcd-2.etcd.his-masterdb.svc.cluster.local:2379"
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+        - name: config
+          mountPath: /etc/patroni
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "2000m"
+        livenessProbe:
+          httpGet:
+            path: /liveness
+            port: 8008
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /readiness
+            port: 8008
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 5
+      volumes:
+      - name: config
+        configMap:
+          name: patroni-config
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-storage
+      labels:
+        app: postgres-patroni
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      storageClassName: local-storage-masterdb
+      resources:
+        requests:
+          storage: 20Gi
+      selector:
+        matchLabels:
+          app: masterdb
+          component: postgres

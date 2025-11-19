@@ -5,13 +5,14 @@ metadata:
   namespace: his-masterdb
   labels:
     app: postgres-patroni
+    role: replica
 spec:
   type: NodePort
+  ports:
+  - name: postgresql
+    port: 5432
+    targetPort: 5432
+    nodePort: 30003
   selector:
     app: postgres-patroni
     role: replica
-  ports:
-  - name: postgres
-    port: 10003
-    targetPort: 10003
-    nodePort: 30003
