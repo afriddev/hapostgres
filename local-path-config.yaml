@@ -4,14 +4,10 @@ metadata:
   name: local-path-config
   namespace: local-path-storage
 data:
-  config.json: |-
+  config.json: |
     {
-      "nodePathMap":[
-        {
-          "node":"DEFAULT_PATH_FOR_NON_LISTED_NODES",
-          "paths":["/home/alien/masterdb"]
-        }
-      ]
+      "node":"server",
+      "paths":["/home/alien/masterdb"]
     }
   setup: |-
     #!/bin/sh
