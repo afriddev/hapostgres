@@ -77,7 +77,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: local-path-config
-  namespace: local-path-storage
+  namespace: kube-system
 data:
   config.json: |-
     {
@@ -96,15 +96,6 @@ data:
     #!/bin/sh
     set -eu
     rm -rf "$VOL_DIR"
-  helperPod.yaml: |-
-    apiVersion: v1
-    kind: Pod
-    metadata:
-      name: helper-pod
-    spec:
-      containers:
-      - name: helper-pod
-        image: busybox
 
 ---
 apiVersion: apps/v1
@@ -139,7 +130,7 @@ spec:
         - name: PGPORT
           value: "10003"
         - name: ETCD3_HOSTS
-          value: 'etcd-0.etcd.postgres-ha.svc.cluster.local:2379,etcd-1.etcd.postgres-ha.svc.cluster.local:2379,etcd-2.etcd.postgres-ha.svc.cluster.local:2379'
+          value: 'etcd-0.etcd:2379,etcd-1.etcd:2379,etcd-2.etcd:2379'
         - name: KUBERNETES_LABELS
           value: '{app: postgres-patroni}'
         - name: KUBERNETES_SCOPE_LABEL
@@ -194,7 +185,7 @@ spec:
             name: postgres-config
         volumeMounts:
         - name: postgres-data
-          mountPath: /home/postgres/pgdata
+          mountPath: /home/postgres/pgdata/pgroot
         - name: dshm
           mountPath: /dev/shm
         livenessProbe:
