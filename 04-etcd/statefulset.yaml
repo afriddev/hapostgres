@@ -16,9 +16,6 @@ spec:
       labels:
         app: etcd
     spec:
-      securityContext:
-        fsGroup: 1001
-        runAsUser: 1001
       containers:
       - name: etcd
         image: quay.io/coreos/etcd:v3.5.10
@@ -27,21 +24,6 @@ spec:
           name: client
         - containerPort: 2380
           name: peer
-        command:
-        - /bin/sh
-        - -c
-        - |
-          # Create data dir if not exists
-          mkdir -p /etcd-data
-          
-          # Check if cluster already exists
-          if [ -d "/etcd-data/member" ]; then
-            export ETCD_INITIAL_CLUSTER_STATE="existing"
-          else
-            export ETCD_INITIAL_CLUSTER_STATE="new"
-          fi
-          
-          exec etcd
         env:
         - name: ETCD_NAME
           valueFrom:
@@ -57,6 +39,8 @@ spec:
           value: "http://0.0.0.0:2379"
         - name: ETCD_INITIAL_CLUSTER
           value: "etcd-0=http://etcd-0.etcd.his-masterdb.svc.cluster.local:2380,etcd-1=http://etcd-1.etcd.his-masterdb.svc.cluster.local:2380,etcd-2=http://etcd-2.etcd.his-masterdb.svc.cluster.local:2380"
+        - name: ETCD_INITIAL_CLUSTER_STATE
+          value: "new"
         - name: ETCD_INITIAL_CLUSTER_TOKEN
           value: "etcd-cluster-masterdb"
         - name: ETCD_DATA_DIR
@@ -79,7 +63,7 @@ spec:
           initialDelaySeconds: 30
           periodSeconds: 10
           timeoutSeconds: 5
-          failureThreshold: 3
+          failureThreshold: 5
         readinessProbe:
           httpGet:
             path: /health
@@ -88,7 +72,7 @@ spec:
           initialDelaySeconds: 10
           periodSeconds: 5
           timeoutSeconds: 3
-          failureThreshold: 3
+          failureThreshold: 5
   volumeClaimTemplates:
   - metadata:
       name: etcd-storage
@@ -101,7 +85,3 @@ spec:
       resources:
         requests:
           storage: 5Gi
-      selector:
-        matchLabels:
-          app: masterdb
-          component: etcd
