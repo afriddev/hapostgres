@@ -15,9 +15,15 @@ kubectl wait --for=condition=ready pod -l app=local-path-provisioner -n kube-sys
 echo "✓ Storage provisioner configured"
 
 kubectl apply --validate=false -f namespace.yaml
+
+# Apply RBAC for Patroni
+kubectl apply --validate=false -f patroni/serviceaccount.yaml
+kubectl apply --validate=false -f patroni/clusterrole.yaml
+kubectl apply --validate=false -f patroni/rolebinding.yaml
+
 kubectl apply --validate=false -f secrets.yaml
 kubectl apply --validate=false -f storage-class.yaml
-echo "✓ Namespace, Secrets, StorageClass applied"
+echo "✓ Namespace, Secrets, StorageClass, RBAC applied"
 
 kubectl apply --validate=false -f etcd/
 echo "✓ ETCD applied"
