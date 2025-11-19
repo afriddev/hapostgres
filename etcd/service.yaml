@@ -5,10 +5,10 @@ metadata:
   namespace: his-masterdb
 spec:
   clusterIP: None
-  ports:
-  - port: 2379
-    name: client
-  - port: 2380
-    name: peer
   selector:
     app: etcd
+  ports:
+  - name: client
+    port: 2379
+  - name: peer
+    port: 2380

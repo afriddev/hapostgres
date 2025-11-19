@@ -5,11 +5,11 @@ metadata:
   namespace: his-masterdb
 spec:
   clusterIP: None
-  ports:
-  - port: 10003
-    targetPort: 10003
-    name: postgres
-  - port: 8008
-    name: patroni
   selector:
     app: postgres-patroni
+  ports:
+  - name: postgres
+    port: 10003
+    targetPort: 10003
+  - name: patroni
+    port: 8008

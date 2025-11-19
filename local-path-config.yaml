@@ -6,29 +6,10 @@ metadata:
 data:
   config.json: |-
     {
-      "nodePathMap":[
+      "nodePathMap": [
         {
-          "node":"DEFAULT_PATH_FOR_NON_LISTED_NODES",
-          "paths":["/home/alien/his-masterdb"]
+          "node": "DEFAULT_PATH_FOR_NON_LISTED_NODES",
+          "paths": ["/home/alien/his-masterdb"]
         }
       ]
     }
-  setup: |-
-    #!/bin/sh
-    set -eu
-    mkdir -m 0777 -p "$VOL_DIR"
-    chmod 777 "$VOL_DIR"
-  teardown: |-
-    #!/bin/sh
-    set -eu
-    echo "Skipping deletion to preserve data"
-  helperPod.yaml: |-
-    apiVersion: v1
-    kind: Pod
-    metadata:
-      name: helper-pod
-    spec:
-      containers:
-      - name: helper-pod
-        image: busybox
-        imagePullPolicy: IfNotPresent
