@@ -1,73 +1,56 @@
 #!/bin/bash
-
 set -e
 
 echo "====== Deploying PostgreSQL HA Cluster ======"
 echo ""
 
-# Check if local-path-provisioner is installed
-if ! kubectl get deployment local-path-provisioner -n local-path-storage &> /dev/null; then
-    echo "Installing local-path-provisioner..."
-    kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.24/deploy/local-path-storage.yaml
-    echo "Waiting for provisioner to be ready..."
-    kubectl wait --for=condition=ready pod -l app=local-path-provisioner -n local-path-storage --timeout=120s
-    echo "✓ local-path-provisioner installed"
-else
-    echo "✓ local-path-provisioner already installed"
-fi
+# Ensure local-path-storage namespace
+kubectl get ns local-path-storage >/dev/null 2>&1 || kubectl create ns local-path-storage
+
+# Apply storage config for /home/alien/masterdb
+kubectl apply -f local-path-config.yaml
+
+echo "Restarting local-path-provisioner..."
+kubectl delete pod -n kube-system -l app=local-path-provisioner --force --grace-period=0 || true
+sleep 3
+kubectl wait --for=condition=ready pod -l app=local-path-provisioner -n kube-system --timeout=180s
+echo "✓ Storage provisioner configured"
 
 echo ""
-echo "Applying manifests..."
-
 kubectl apply -f namespace.yaml
-echo "✓ Namespace created"
-
 kubectl apply -f secrets.yaml
-echo "✓ Secrets created"
-
 kubectl apply -f storage-class.yaml
-echo "✓ Custom StorageClass created"
+echo "✓ Namespace, Secrets, StorageClass applied"
 
 kubectl apply -f etcd/
-echo "✓ etcd deployed"
+echo "✓ ETCD applied"
 
-echo ""
-echo "Waiting for etcd to be ready..."
+echo "Waiting for ETCD cluster to be ready..."
 kubectl wait --for=condition=ready pod -l app=etcd -n postgres-ha --timeout=300s
-echo "✓ etcd is ready"
+echo "✓ ETCD ready"
 
 kubectl apply -f patroni/
-echo "✓ Patroni deployed"
+echo "✓ Patroni applied"
 
-echo ""
-echo "Waiting for PostgreSQL to be ready..."
+echo "Waiting for PostgreSQL cluster to be ready..."
 kubectl wait --for=condition=ready pod -l app=postgres-patroni -n postgres-ha --timeout=300s
+echo ""
 
-echo ""
 echo "====== Deployment Complete ======"
-echo ""
-echo "Cluster Status:"
 kubectl get pods -n postgres-ha
-echo ""
-echo "Services:"
 kubectl get svc -n postgres-ha
-echo ""
-echo "Storage:"
 kubectl get pvc -n postgres-ha
-echo ""
-echo "Data Location:"
-echo "  /home/alien/masterdb/"
+
+NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[0].address}')
 echo ""
 echo "Connection Info:"
-NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[0].address}')
-echo "  Master: $NODE_IP:30002"
-echo "  Replica: $NODE_IP:30003"
-echo "  User: his"
-echo "  Password: his123"
-echo "  Database: registration"
+echo "Master  : $NODE_IP:30002"
+echo "Replicas: $NODE_IP:30003"
+echo "User    : his"
+echo "Password: his123"
+echo "Database: registration"
 echo ""
-echo "Check cluster status:"
+echo "Cluster status check:"
 echo "  kubectl exec -n postgres-ha postgres-patroni-0 -- patronictl list"
 echo ""
-echo "Verify data storage:"
-echo "  ls -la /home/alien/masterdb/"
+echo "Data stored under /home/alien/masterdb/"
