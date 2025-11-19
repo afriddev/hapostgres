@@ -7,7 +7,7 @@ metadata:
     app: etcd
 spec:
   serviceName: etcd
-  replicas: 3
+  replicas: 1  # ← Changed from 3 to 1
   selector:
     matchLabels:
       app: etcd
@@ -38,7 +38,7 @@ spec:
         - name: ETCD_LISTEN_CLIENT_URLS
           value: "http://0.0.0.0:2379"
         - name: ETCD_INITIAL_CLUSTER
-          value: "etcd-0=http://etcd-0.etcd.his-masterdb.svc.cluster.local:2380,etcd-1=http://etcd-1.etcd.his-masterdb.svc.cluster.local:2380,etcd-2=http://etcd-2.etcd.his-masterdb.svc.cluster.local:2380"
+          value: "etcd-0=http://etcd-0.etcd.his-masterdb.svc.cluster.local:2380"  # ← Only etcd-0
         - name: ETCD_INITIAL_CLUSTER_STATE
           value: "new"
         - name: ETCD_INITIAL_CLUSTER_TOKEN
@@ -60,19 +60,19 @@ spec:
             path: /health
             port: 2379
             scheme: HTTP
-          initialDelaySeconds: 30
+          initialDelaySeconds: 60
           periodSeconds: 10
           timeoutSeconds: 5
-          failureThreshold: 5
+          failureThreshold: 10
         readinessProbe:
           httpGet:
             path: /health
             port: 2379
             scheme: HTTP
-          initialDelaySeconds: 10
-          periodSeconds: 5
-          timeoutSeconds: 3
-          failureThreshold: 5
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 10
   volumeClaimTemplates:
   - metadata:
       name: etcd-storage
