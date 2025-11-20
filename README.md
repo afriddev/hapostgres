@@ -26,10 +26,53 @@ source ~/.bashrc
 
 ---
 
-#### Access PostgreSQL via pod
+#### Access Registration DB via pod
 
 ```bash
-kubectl exec -n his-masterdb -it postgres-patroni-0 -- psql -U his -d postgres
+kubectl exec -n his-masterdb -it postgres-patroni-0 -- psql -U postgres -d postgres
+
+```
+
+#### Create user, DB & grant permissions
+
+```sql
+CREATE USER his WITH PASSWORD 'his123';
+CREATE DATABASE registration OWNER his;
+GRANT ALL PRIVILEGES ON DATABASE registration TO his;
+\q
+```
+
+#### Access PostgreSQL via pod
+```bash
+kubectl exec -n his-masterdb -it postgres-patroni-0 -- psql -U postgres -d postgres
+```
+
+#### Create user, DB, table & insert data
+```bash
+kubectl exec -n his-masterdb -it postgres-patroni-0 -- psql -U postgres -d postgres <<EOF
+CREATE USER his WITH PASSWORD 'his123';
+CREATE DATABASE registration OWNER his;
+GRANT ALL PRIVILEGES ON DATABASE registration TO his;
+\c registration
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    age INTEGER,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+GRANT ALL PRIVILEGES ON TABLE users TO his;
+GRANT USAGE, SELECT ON SEQUENCE users_id_seq TO his;
+INSERT INTO users (name, email, age) VALUES 
+    ('Alice', 'alice@example.com', 28),
+    ('Bob', 'bob@example.com', 32);
+SELECT * FROM users;
+EOF
+```
+
+#### Access Registration DB and verify data
+```bash
+kubectl exec -n his-masterdb -it postgres-patroni-0 -- psql -U his -d registration -c "SELECT * FROM users;"
 ```
 
 ---
@@ -38,13 +81,7 @@ kubectl exec -n his-masterdb -it postgres-patroni-0 -- psql -U his -d postgres
 
 ```sql
 CREATE DATABASE registration;
-GRANT ALL PRIVILEGES ON DATABASE registration TO his;
-```
-
-#### Access Registration DB via pod
-
-```bash
-kubectl exec -n his-masterdb -it postgres-patroni-0 -- psql -U his -d registration
+GRANT ALL PRIVILEGES ON DATABASE registration TO postgres;
 ```
 
 ---
