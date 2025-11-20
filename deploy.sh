@@ -25,7 +25,7 @@ kubectl apply -f pvc/patroni/patroni-pv2.yaml
 echo "Created Persistent Volumes completed."
 
 echo "→ Deploying etcd cluster..."
-kubectl apply -f 04-etcd/
+kubectl apply -f etcd/
 echo "Waiting for etcd to be ready..."
 kubectl wait --for=condition=ready pod -l app=etcd -n his-masterdb --timeout=300s || true
 echo ""
