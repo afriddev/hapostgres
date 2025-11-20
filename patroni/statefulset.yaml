@@ -18,8 +18,8 @@ spec:
     spec:
       serviceAccountName: postgres-patroni
       securityContext:
-        fsGroup: 101  # ← postgres group
-        runAsUser: 101  # ← postgres user
+        fsGroup: 101  
+        runAsUser: 101  
         runAsNonRoot: true
       containers:
       - name: patroni

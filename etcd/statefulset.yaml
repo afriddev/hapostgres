@@ -8,7 +8,7 @@ metadata:
 spec:
   serviceName: etcd
   replicas: 3
-  podManagementPolicy: Parallel  # ← Starts all 3 pods at once
+  podManagementPolicy: Parallel 
   selector:
     matchLabels:
       app: etcd

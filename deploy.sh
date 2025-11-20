@@ -1,32 +1,28 @@
 #!/bin/bash
 set -e
 
-echo "====== Deploying Master DB Cluster ======"
-echo ""
-
-# Clear etcd data on fresh deploy
 if [ -d "/home/alien/masterdb/etcd-0/member" ]; then
     echo "→ Clearing old etcd data..."
     sudo rm -rf /home/alien/masterdb/etcd-*/*
     echo "✓ etcd data cleared"
 fi
 
-# Apply in order
-echo "→ Creating namespace..."
-kubectl apply -f 00-namespace/
-echo ""
+echo "Applying k3s namespace, RBAC, and secrets ..."
+kubectl apply -f namespace/
+echo "Created namespace completed."
+kubectl apply -f rbac/
+echo "Created RBAC completed."
+kubectl apply -f secrets/
 
-echo "→ Creating RBAC resources..."
-kubectl apply -f 01-rbac/
-echo ""
-
-echo "→ Creating secrets..."
-kubectl apply -f 02-secrets/
-echo ""
-
-echo "→ Creating storage resources..."
-kubectl apply -f 03-storage/
-echo ""
+echo "Applying PVCs for etcd started ..."
+kubectl apply -f pvc/etcd/etcd-pv0.yaml
+kubectl apply -f pvc/etcd/etcd-pv1.yaml
+kubectl apply -f pvc/etcd/etcd-pv2.yaml
+echo "Applying PVCs for Patroni PostgreSQL"
+kubectl apply -f pvc/patroni/patroni-pv0.yaml
+kubectl apply -f pvc/patroni/patroni-pv1.yaml
+kubectl apply -f pvc/patroni/patroni-pv2.yaml
+echo "Created Persistent Volumes completed."
 
 echo "→ Deploying etcd cluster..."
 kubectl apply -f 04-etcd/
@@ -35,8 +31,8 @@ kubectl wait --for=condition=ready pod -l app=etcd -n his-masterdb --timeout=300
 echo ""
 
 echo "→ Deploying Patroni PostgreSQL..."
-kubectl apply -f 05-patroni/
-kubectl apply -f 05-patroni/nodeport/
+kubectl apply -f patroni/
+kubectl apply -f patroni/nodeport/
 echo "Waiting for PostgreSQL to be ready..."
 kubectl wait --for=condition=ready pod -l app=postgres-patroni -n his-masterdb --timeout=600s || true
 echo ""
@@ -46,12 +42,3 @@ echo ""
 kubectl get pods -n his-masterdb
 echo ""
 
-NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[0].address}')
-echo "✓ PostgreSQL Master: $NODE_IP:30002"
-echo "✓ PostgreSQL Replicas: $NODE_IP:30003"
-echo "✓ User: postgres | Database: postgres"
-echo ""
-echo "Data location: /home/alien/masterdb/"
-echo ""
-echo "Check cluster:"
-echo "  kubectl exec -n his-masterdb postgres-patroni-0 -- patronictl list"
